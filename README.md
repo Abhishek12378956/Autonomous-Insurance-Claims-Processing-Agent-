@@ -23,7 +23,7 @@ A modern, intelligent web application for automated processing of insurance clai
 
 ### State Transitions
 
-![State Transitions Diagram](/state_transitions.png)
+![State Transitions Diagram](https://github.com/Abhishek12378956/Autonomous-Insurance-Claims-Processing-Agent-/blob/main/public/state_transitions.png?raw=true)
 
 This diagram illustrates the various states of the application and how it transitions between them based on user actions and the processing pipeline outcomes.
 
