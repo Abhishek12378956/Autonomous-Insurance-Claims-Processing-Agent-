@@ -21,6 +21,12 @@ A modern, intelligent web application for automated processing of insurance clai
 
 ## 🏗️ Architecture
 
+### State Transitions
+
+![State Transitions Diagram](/state_transitions.png)
+
+This diagram illustrates the various states of the application and how it transitions between them based on user actions and the processing pipeline outcomes.
+
 ### Processing Pipeline
 
 The application uses a 7-stage processing pipeline:
