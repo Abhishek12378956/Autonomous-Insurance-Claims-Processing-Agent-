@@ -1,0 +1,8 @@
+Policy Number: POL-123456
+Policyholder Name: John Smith
+Incident Date: 01/15/2026
+Incident Time: 2:30 PM
+Location: 123 Main Street, Springfield, IL
+Description: Vehicle collision at intersection. Front bumper damage and broken headlight.
+Estimated Damage: $15,000
+Injury: No injuries reported
