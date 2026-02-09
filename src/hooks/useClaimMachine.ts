@@ -4,7 +4,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useClaimProcessing } from './useClaimProcessing';
 import type { WorkflowState } from '../types/pipeline.types';
-import type { ProcessingResult } from '../types/claim.types';
 
 export function useClaimMachine() {
     const [state, setState] = useState<WorkflowState>('idle');

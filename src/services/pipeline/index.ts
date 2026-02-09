@@ -35,7 +35,7 @@ export async function executePipeline(file: File): Promise<ProcessingResult> {
 
     // Stage 4: Extract fields
     console.log('🔍 Stage 4: Extracting fields...');
-    const extraction = await extractFields(normalized.normalizedText);
+    const extraction = await extractFields(normalized.normalizedText, parsed);
     console.log('✅ Fields extracted:', Object.keys(extraction.fields));
     console.log('✅ Field values:', extraction.fields);
     console.log('✅ Missing fields:', ['policyEffectiveDate', 'policyExpiryDate', 'incidentTime', 'initialEstimate', 'assetId', 'attachments'].filter(field => !extraction.fields[field as keyof typeof extraction.fields]));

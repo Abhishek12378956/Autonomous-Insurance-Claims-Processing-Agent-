@@ -94,15 +94,41 @@ export const FIELD_KEYWORDS = {
     attachments: ['Attachment', 'Document', 'Supporting Document', 'Evidence'],
 };
 
+// Flatten all field keywords into a single list for trimming mixed lines
+const ALL_FIELD_KEYWORDS: string[] = Object.values(FIELD_KEYWORDS).flat();
+
 /**
- * Extract value after a keyword in text
+ * Extract value after a keyword in text.
+ * 
+ * NOTE: PDF text extraction can put multiple label/value pairs on one line
+ * (e.g. "Policy Number: POL-123 Policyholder Name: John Doe ...").
+ * To avoid mapping the entire tail of the line, we trim at the next
+ * known field keyword so we only keep the value for the current field.
  */
 export function extractAfterKeyword(text: string, keywords: string[]): string | null {
     for (const keyword of keywords) {
         const regex = new RegExp(`${keyword}\\s*:?\\s*([^\\n]+)`, 'i');
         const match = text.match(regex);
         if (match && match[1]) {
-            return match[1].trim();
+            let value = match[1].trim();
+
+            // Find earliest occurrence of any other field keyword and cut there
+            let cutIndex = value.length;
+            for (const otherKeyword of ALL_FIELD_KEYWORDS) {
+                // Skip the same keyword variants we just matched on
+                if (keywords.includes(otherKeyword)) continue;
+
+                const idx = value.toLowerCase().indexOf(otherKeyword.toLowerCase());
+                if (idx !== -1 && idx < cutIndex) {
+                    cutIndex = idx;
+                }
+            }
+
+            if (cutIndex !== value.length) {
+                value = value.substring(0, cutIndex).trim();
+            }
+
+            return value;
         }
     }
     return null;

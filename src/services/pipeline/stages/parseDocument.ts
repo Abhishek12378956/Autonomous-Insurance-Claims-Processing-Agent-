@@ -13,13 +13,20 @@ export async function parseDocument(file: File): Promise<ParsedDocument> {
 
     let text: string;
     let pageCount: number | undefined;
+    let formFields: Record<string, string> | undefined;
 
     try {
-        // Parse PDF
+        // Parse PDF with form field extraction
         if (fileType === 'application/pdf' || fileExtension === '.pdf') {
             const result = await parsePDF(file);
             text = result.text;
             pageCount = result.pageCount;
+            formFields = result.formFields;
+            
+            // If form fields found, log them for debugging
+            if (formFields && Object.keys(formFields).length > 0) {
+                console.log('📋 PDF Form Fields Extracted:', formFields);
+            }
         }
         // Parse TXT
         else if (fileType === 'text/plain' || fileExtension === '.txt') {
@@ -37,6 +44,7 @@ export async function parseDocument(file: File): Promise<ParsedDocument> {
                 fileType,
                 fileSize: file.size,
                 pageCount,
+                formFields,
             },
         };
     } catch (error) {

@@ -20,7 +20,7 @@ import {
     Paperclip,
     Tag,
 } from 'lucide-react';
-import { formatFieldName } from '../../utils/textHelpers';
+import { formatFieldName, truncate } from '../../utils/textHelpers';
 
 interface ExtractionPreviewProps {
     extractedFields: ExtractedFields;
@@ -79,18 +79,25 @@ export function ExtractionPreview({ extractedFields }: ExtractionPreviewProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {fieldEntries.map(([key, value], index) => {
-                        const displayValue =
-                            key === 'hasInjury'
-                                ? value
-                                    ? 'Yes'
-                                    : 'No'
-                                : key === 'estimatedDamage' || key === 'initialEstimate'
-                                    ? `$${(value as number).toLocaleString()}`
-                                    : key === 'thirdParties' || key === 'attachments'
-                                        ? Array.isArray(value) 
-                                            ? value.join(', ')
-                                            : String(value)
-                                        : String(value);
+                        // Normalize raw value per field
+                        let rawDisplay: string;
+                        if (key === 'hasInjury') {
+                            rawDisplay = value ? 'Yes' : 'No';
+                        } else if (key === 'estimatedDamage' || key === 'initialEstimate') {
+                            rawDisplay = `$${(value as number).toLocaleString()}`;
+                        } else if (key === 'thirdParties' || key === 'attachments') {
+                            // For lists, show only the first entry in the preview
+                            if (Array.isArray(value) && value.length > 0) {
+                                rawDisplay = String(value[0]);
+                            } else {
+                                rawDisplay = String(value);
+                            }
+                        } else {
+                            rawDisplay = String(value);
+                        }
+
+                        // Truncate long strings so we don't show the entire value in the preview
+                        const displayValue = truncate(rawDisplay, 120);
 
                         return (
                             <motion.div

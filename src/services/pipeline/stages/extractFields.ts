@@ -1,7 +1,7 @@
 // Stage 4: Field Extraction
 
 import type { ExtractedFields } from '../../../types/claim.types';
-import type { ExtractionResult } from '../../../types/pipeline.types';
+import type { ExtractionResult, ParsedDocument } from '../../../types/pipeline.types';
 import {
     REGEX_PATTERNS,
     FIELD_KEYWORDS,
@@ -12,15 +12,67 @@ import {
 } from '../../../utils/regexHelpers';
 
 /**
+ * Map PDF form field names to standard field names
+ */
+function mapFormFieldToStandard(fieldName: string): string | null {
+    const fieldMappings: Record<string, string> = {
+        // Common PDF form field names to our standard names
+        'policy_number': 'policyNumber',
+        'policynumber': 'policyNumber',
+        'policy_no': 'policyNumber',
+        'policyholder': 'policyholderName',
+        'insured': 'policyholderName',
+        'claimant': 'claimantName',
+        'incident_date': 'incidentDate',
+        'date_of_loss': 'incidentDate',
+        'loss_date': 'incidentDate',
+        'incident_time': 'incidentTime',
+        'time_of_loss': 'incidentTime',
+        'location': 'location',
+        'description': 'description',
+        'claim_type': 'claimType',
+        'vehicle_type': 'assetType',
+        'vin': 'assetId',
+        'vehicle_id': 'assetId',
+        'damage_amount': 'estimatedDamage',
+        'estimated_damage': 'estimatedDamage',
+        'initial_estimate': 'initialEstimate',
+        'contact': 'claimantContact',
+        'phone': 'claimantContact',
+        'email': 'claimantContact',
+    };
+
+    // Convert to lowercase and check mappings
+    const normalizedName = fieldName.toLowerCase().trim();
+    return fieldMappings[normalizedName] || null;
+}
+
+/**
  * Extract FNOL fields from normalized text using regex and keyword mapping
  */
-export async function extractFields(normalizedText: string): Promise<ExtractionResult> {
+export async function extractFields(normalizedText: string, parsedDocument?: ParsedDocument): Promise<ExtractionResult> {
     const fields: ExtractedFields = {};
     const confidence: Record<string, number> = {};
 
+    // First, check if we have form fields from PDF parsing
+    if (parsedDocument?.metadata?.formFields) {
+        console.log('🎯 Using PDF form fields for extraction');
+        const formFields = parsedDocument.metadata.formFields;
+        
+        // Map form fields to our standard field names
+        Object.entries(formFields).forEach(([fieldName, value]) => {
+            const mappedField = mapFormFieldToStandard(fieldName);
+            if (mappedField && value) {
+                (fields as any)[mappedField] = value;
+                confidence[mappedField] = 0.95; // High confidence for form fields
+            }
+        });
+    }
+
+    // Continue with text-based extraction for any missing fields
     // Policy Information
     const policyNumber = extractPolicyNumber(normalizedText);
-    if (policyNumber) {
+    if (policyNumber && !fields.policyNumber) {
         fields.policyNumber = policyNumber;
         confidence.policyNumber = 0.8;
     }
