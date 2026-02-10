@@ -19,7 +19,7 @@ export interface ParsedDocument {
         fileType: string;
         fileSize: number;
         pageCount?: number;
-        formFields?: Record<string, string>;
+        formFields?: Record<string, string | null>;
     };
 }
 

@@ -13,7 +13,7 @@ export interface PDFParseResult {
     text: string;
     pageCount: number;
     metadata?: any;
-    formFields?: Record<string, string>;
+    formFields?: Record<string, string | null>;
 }
 
 /**
@@ -56,8 +56,9 @@ export async function parsePDF(file: File): Promise<PDFParseResult> {
                         value = Array.isArray(selected) ? selected.join(', ') : (selected || '');
                     }
                     
-                    if (name && value) {
-                        formFields[name] = value;
+                    // Always include field, even if empty (null for empty, undefined for missing)
+                    if (name) {
+                        (formFields as any)[name] = value || null;
                     }
                 });
             }

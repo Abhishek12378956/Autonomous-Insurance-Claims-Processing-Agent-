@@ -61,30 +61,62 @@ const FIELD_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function ExtractedFieldsPanel({ fields, confidence }: ExtractedFieldsPanelProps) {
-    const fieldEntries = Object.entries(fields).filter(([_, value]) => value !== undefined);
+    // Define all 16 required fields to ensure they all show up
+    const allFields: (keyof ExtractedFields)[] = [
+        // Policy Information
+        'policyNumber',
+        'policyholderName', 
+        'policyEffectiveDate',
+        'policyExpiryDate',
+        
+        // Incident Information
+        'incidentDate',
+        'incidentTime',
+        'location',
+        'description',
+        'claimType',
+        
+        // Involved Parties
+        'claimantName',
+        'claimantContact',
+        'thirdParties',
+        
+        // Asset Details
+        'assetType',
+        'assetId',
+        
+        // Financial Information
+        'estimatedDamage',
+        'initialEstimate',
+        
+        // Other Information
+        'hasInjury',
+        'attachments'
+    ];
 
     return (
         <Card variant="elevated">
             <SectionHeader
                 title="Extracted Fields"
-                subtitle="Information extracted from the uploaded document"
+                subtitle="Information extracted from uploaded document"
                 icon={<FileText className="w-6 h-6" />}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {fieldEntries.map(([key, value], index) => {
+                {allFields.map((key, index) => {
+                    const value = fields[key];
                     const displayValue =
                         key === 'hasInjury'
                             ? value
                                 ? 'Yes'
                                 : 'No'
                             : key === 'estimatedDamage' || key === 'initialEstimate'
-                                ? `$${(value as number).toLocaleString()}`
+                                ? `$${(value as number)?.toLocaleString() || ''}`
                                 : key === 'thirdParties' || key === 'attachments'
                                     ? Array.isArray(value) 
                                         ? value.join(', ')
-                                        : String(value)
-                                    : String(value);
+                                        : String(value || '')
+                                    : String(value || '');
 
                     const confidenceScore = confidence?.[key];
 
@@ -119,7 +151,7 @@ export function ExtractedFieldsPanel({ fields, confidence }: ExtractedFieldsPane
                 })}
             </div>
 
-            {fieldEntries.length === 0 && (
+            {allFields.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                     No fields extracted from the document
                 </div>

@@ -21,11 +21,14 @@ export async function parseDocument(file: File): Promise<ParsedDocument> {
             const result = await parsePDF(file);
             text = result.text;
             pageCount = result.pageCount;
-            formFields = result.formFields;
+            formFields = result.formFields as any;
             
-            // If form fields found, log them for debugging
+            // If form fields found, prioritize them over text extraction
             if (formFields && Object.keys(formFields).length > 0) {
                 console.log('📋 PDF Form Fields Extracted:', formFields);
+                console.log('🎯 Using form field values instead of text extraction');
+                // Use empty text to prevent label extraction from text
+                text = '';
             }
         }
         // Parse TXT

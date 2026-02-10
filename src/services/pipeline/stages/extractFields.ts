@@ -16,35 +16,60 @@ import {
  */
 function mapFormFieldToStandard(fieldName: string): string | null {
     const fieldMappings: Record<string, string> = {
-        // Common PDF form field names to our standard names
-        'policy_number': 'policyNumber',
-        'policynumber': 'policyNumber',
-        'policy_no': 'policyNumber',
-        'policyholder': 'policyholderName',
-        'insured': 'policyholderName',
-        'claimant': 'claimantName',
-        'incident_date': 'incidentDate',
-        'date_of_loss': 'incidentDate',
-        'loss_date': 'incidentDate',
-        'incident_time': 'incidentTime',
-        'time_of_loss': 'incidentTime',
-        'location': 'location',
-        'description': 'description',
-        'claim_type': 'claimType',
-        'vehicle_type': 'assetType',
-        'vin': 'assetId',
-        'vehicle_id': 'assetId',
-        'damage_amount': 'estimatedDamage',
-        'estimated_damage': 'estimatedDamage',
-        'initial_estimate': 'initialEstimate',
-        'contact': 'claimantContact',
-        'phone': 'claimantContact',
-        'email': 'claimantContact',
+        // Policy Information
+        'POLICY NUMBER': 'policyNumber',
+        'POLICY_NUMBER': 'policyNumber',
+        'POLICY_NO': 'policyNumber',
+        'AGENCY CUSTOMER ID': 'policyholderName',
+        'AGENCY CUSTOMER ID_2': 'policyholderName',
+        'AGENCY CUSTOMER ID_3': 'policyholderName',
+        'AGENCY CUSTOMER ID_4': 'policyholderName',
+        'NAME OF INSURED First Middle Last': 'policyholderName',
+        
+        // Incident Information
+        'DATE OF BIRTH': 'incidentDate', // Using as proxy if incident date not found
+        'Text3': 'incidentDate', // Date field
+        'STREET LOCATION OF LOSS': 'location',
+        'CITY STATE ZIP': 'location',
+        'DESCRIBE LOCATION OF LOSS IF NOT AT SPECIFIC STREET ADDRESS': 'location',
+        'DESCRIPTION OF ACCIDENT ACORD 101 Additional Remarks Schedule may be attached if more space is required': 'description',
+        'REMARKS ACORD 101 Additional Remarks Schedule may be attached if more space is required': 'description',
+        
+        // Involved Parties
+        'NAME CONTACT': 'claimantName',
+        'AC No Ext PHONE': 'claimantContact',
+        'PHONE AC No': 'claimantContact',
+        'PHONE AC NoRow1': 'claimantContact',
+        'PHONE AC NoRow2': 'claimantContact',
+        'PHONE AC NoRow3': 'claimantContact',
+        'PHONE AC NoRow4': 'claimantContact',
+        
+        // Asset Details
+        'VIN': 'assetId',
+        'VEH': 'assetType',
+        'VEH_2': 'assetType',
+        'YEAR': 'assetType',
+        'MAKE': 'assetType',
+        'TYPE BODY': 'assetType',
+        'MODEL': 'assetType',
+        'PLATE NUMBER': 'assetId',
+        'PLATE NUMBER_2': 'assetId',
+        
+        // Financial Information
+        'ESTIMATE AMOUNT_2': 'estimatedDamage',
+        'DESCRIBE DAMAGE': 'estimatedDamage',
+        'DESCRIBE DAMAGE_2': 'estimatedDamage',
+        
+        // Other Fields
+        'Check Box5': 'claimType', // Assuming this maps to claim type
+        'Check Box6': 'attachments', // Assuming this maps to attachments
+        'Text7': 'initialEstimate', // Phone number field as estimate proxy
+        'Text22': 'initialEstimate', // Another estimate field
     };
 
     // Convert to lowercase and check mappings
     const normalizedName = fieldName.toLowerCase().trim();
-    return fieldMappings[normalizedName] || null;
+    return fieldMappings[fieldName.toUpperCase()] || fieldMappings[normalizedName] || null;
 }
 
 /**
@@ -62,9 +87,11 @@ export async function extractFields(normalizedText: string, parsedDocument?: Par
         // Map form fields to our standard field names
         Object.entries(formFields).forEach(([fieldName, value]) => {
             const mappedField = mapFormFieldToStandard(fieldName);
-            if (mappedField && value) {
-                (fields as any)[mappedField] = value;
-                confidence[mappedField] = 0.95; // High confidence for form fields
+            if (mappedField) {
+                // Convert null to empty string for UI display
+                const displayValue = (value === null || value === undefined) ? '' : value.trim();
+                (fields as any)[mappedField] = displayValue;
+                confidence[mappedField] = displayValue ? 0.95 : 0.1; // High confidence for form fields
             }
         });
     }
@@ -188,10 +215,27 @@ export async function extractFields(normalizedText: string, parsedDocument?: Par
 function extractPolicyNumber(text: string): string | null {
     // Try keyword-based extraction first
     const keywordResult = extractAfterKeyword(text, FIELD_KEYWORDS.policyNumber);
-    if (keywordResult) return keywordResult;
+    if (keywordResult) {
+        // Label safety check: reject if value contains the keyword itself
+        if (keywordResult.toLowerCase().includes('policy') || 
+            keywordResult.toLowerCase().includes('number') ||
+            keywordResult.toLowerCase().includes('policy no') ||
+            keywordResult.toLowerCase().includes('policy #')) {
+            return null;
+        }
+        return keywordResult;
+    }
 
     // Try pattern-based extraction
-    return extractWithPatterns(text, REGEX_PATTERNS.policyNumber);
+    const patternResult = extractWithPatterns(text, REGEX_PATTERNS.policyNumber);
+    if (patternResult) {
+        // Label safety check
+        if (patternResult.toLowerCase().includes('policy') || 
+            patternResult.toLowerCase().includes('number')) {
+            return null;
+        }
+    }
+    return patternResult;
 }
 
 /**
@@ -200,10 +244,20 @@ function extractPolicyNumber(text: string): string | null {
 function extractIncidentDate(text: string): string | null {
     // Try keyword-based extraction first
     const keywordResult = extractAfterKeyword(text, FIELD_KEYWORDS.incidentDate);
-    if (keywordResult) return keywordResult;
+    if (keywordResult) {
+        // Label safety check: reject if value contains date-related keywords
+        if (keywordResult.toLowerCase().includes('date') || 
+            keywordResult.toLowerCase().includes('incident') ||
+            keywordResult.toLowerCase().includes('loss') ||
+            keywordResult.toLowerCase().includes('time')) {
+            return null;
+        }
+        return keywordResult;
+    }
 
     // Try pattern-based extraction
-    return extractWithPatterns(text, REGEX_PATTERNS.date);
+    const patternResult = extractWithPatterns(text, REGEX_PATTERNS.date);
+    return patternResult;
 }
 
 /**
