@@ -59,7 +59,7 @@ const FIELD_ICONS: Record<string, React.ReactNode> = {
 };
 
 export function ExtractionPreview({ extractedFields }: ExtractionPreviewProps) {
-    const fieldEntries = Object.entries(extractedFields).filter(([_, value]) => value !== undefined);
+    const fieldEntries = Object.entries(extractedFields);
 
     return (
         <Card variant="glass" className="max-w-4xl mx-auto">
@@ -82,18 +82,30 @@ export function ExtractionPreview({ extractedFields }: ExtractionPreviewProps) {
                         // Normalize raw value per field
                         let rawDisplay: string;
                         if (key === 'hasInjury') {
-                            rawDisplay = value ? 'Yes' : 'No';
+                            rawDisplay = value !== undefined && value !== null ? (value ? 'Yes' : 'No') : 'Not specified';
                         } else if (key === 'estimatedDamage' || key === 'initialEstimate') {
-                            rawDisplay = `$${(value as number).toLocaleString()}`;
+                            // Handle numeric values - show placeholder for null/undefined
+                            if (value === undefined || value === null) {
+                                rawDisplay = 'Not specified';
+                            } else {
+                                rawDisplay = `$${Number(value).toLocaleString()}`;
+                            }
                         } else if (key === 'thirdParties' || key === 'attachments') {
-                            // For lists, show only the first entry in the preview
+                            // For lists, show placeholder if empty
                             if (Array.isArray(value) && value.length > 0) {
                                 rawDisplay = String(value[0]);
+                            } else if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
+                                rawDisplay = 'Not specified';
                             } else {
                                 rawDisplay = String(value);
                             }
                         } else {
-                            rawDisplay = String(value);
+                            // For string fields, show placeholder if empty
+                            if (value === undefined || value === null || value === '') {
+                                rawDisplay = 'Not specified';
+                            } else {
+                                rawDisplay = String(value);
+                            }
                         }
 
                         // Truncate long strings so we don't show the entire value in the preview
